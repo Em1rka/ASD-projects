@@ -1,0 +1,145 @@
+import heapq
+
+def draw_map(graph):
+    print("\n==========================")
+    print('КАРТА ГОРОДОВ (С ВЕСАМИ):')
+    print("==========================")
+    visited = set()
+    for city, connections in graph.items():
+        for connection, weight in connections.items():
+            if (city, connection) not in visited and (connection, city) not in visited:
+                print(f"| {city} --({weight})--> {connection}")
+                visited.add((city, connection))
+    print("==========================")
+
+def deicstra(graph, start, end):
+    if start not in graph or end not in graph:
+        print("! Ошибка: Один или оба города отсутствуют на карте.")
+        return
+
+    distances = {city: float('inf') for city in graph} 
+    previous = {city: None for city in graph}      
+    distances[start] = 0
+    priority_queue = [(0, start)]  
+
+    while priority_queue:
+        current_distance, current_city = heapq.heappop(priority_queue)
+
+        if current_city == end:
+            path = []
+            while current_city:
+                path.append(current_city)
+                current_city = previous[current_city]
+            path.reverse()
+            print(f"-> Кратчайший маршрут: {' -> '.join(path)} (расстояние: {distances[end]})")
+            return
+
+        for neighbor, weight in graph[current_city].items():
+            distance = current_distance + weight
+            if distance < distances[neighbor]:
+                distances[neighbor] = distance
+                previous[neighbor] = current_city
+                heapq.heappush(priority_queue, (distance, neighbor))
+
+    print("! Нет маршрута между указанными городами.")
+
+def add(graph):
+    while True:
+        city = input("# Введите название нового города: ").strip()
+        if not city:
+            print("! Название города не может быть пустым. Введите корректное название.")
+            continue
+
+        if city in graph:
+            print("! Город уже существует.")
+            return
+
+        from_city = input(f"# Из какого города провести маршрут в {city}? ").strip()
+        if from_city in graph:
+            try:
+                weight = int(input(f"# Введите длину пути между {from_city} и {city}: ").strip())
+                graph[city] = {}
+                graph[from_city][city] = weight
+                graph[city][from_city] = weight
+                print(f"+ Город {city} добавлен на карту.")
+                print(f"+ Маршрут {from_city} --({weight})--> {city} добавлен.")
+            except ValueError:
+                print("! Ошибка: Длина пути должна быть числом.")
+        else:
+            print(f"! Город {from_city} отсутствует. Попробуйте снова.")
+        break
+
+def show_shortest_paths(graph, city):
+    if city not in graph:
+        print("! Город отсутствует на карте.")
+        return
+
+    distances = {city: float('inf') for city in graph}
+    previous = {city: None for city in graph}
+    distances[city] = 0
+    priority_queue = [(0, city)]
+
+    while priority_queue:
+        current_distance, current_city = heapq.heappop(priority_queue)
+
+        for neighbor, weight in graph[current_city].items():
+            distance = current_distance + weight
+            if distance < distances[neighbor]:
+                distances[neighbor] = distance
+                previous[neighbor] = current_city
+                heapq.heappush(priority_queue, (distance, neighbor))
+
+    print(f":: Кратчайшие пути из города {city}:")
+    for destination, distance in sorted(distances.items(), key=lambda x: x[1]):
+        if distance < float('inf'):
+            path = []
+            current = destination
+            while current is not None:
+                path.insert(0, current)
+                current = previous[current]
+            print(f"   - {destination}: {distance} путь -> {' -> '.join(path)}")
+
+def display_menu():
+    print("\n==========================")
+    print(" ВЫБОР ДЕЙСТВИЯ:")
+    print("==========================")
+    print("[1] Найти кратчайший маршрут")
+    print("[2] Добавить город")
+    print("[3] Показать кратчайшие пути из города")
+    print("==========================")
+
+def asd():
+    graph = {
+        "Бишкек": {"Ош": 600, "Талас": 200, "Каракол": 400},
+        "Ош": {"Бишкек": 600, "Нарын": 300, "Джалал-Абад": 100},
+        "Нарын": {"Ош": 300, "Талас": 400},
+        "Талас": {"Бишкек": 200, "Нарын": 400},
+        "Каракол": {"Бишкек": 400, "Чолпон-Ата": 100},
+        "Чолпон-Ата": {"Каракол": 100, "Балыкчы": 150},
+        "Балыкчы": {"Чолпон-Ата": 150, "Нарын": 250},
+        "Джалал-Абад": {"Ош": 100, "Баткен": 200},
+        "Баткен": {"Джалал-Абад": 200, "Кызыл-Кия": 50},
+        "Кызыл-Кия": {"Баткен": 50, "Исфана": 100},
+        "Исфана": {"Кызыл-Кия": 100}
+    }
+
+    while True:
+        draw_map(graph)
+        display_menu()
+
+        choice = input("Введите номер действия: ").strip()
+
+        if choice == "1":
+            start = input("# Введите начальный город: ").strip()
+            end = input("# Введите конечный город: ").strip()
+            deicstra(graph, start, end)
+        elif choice == "2":
+            add(graph)
+        elif choice == "3":
+            city = input("# Введите название города: ").strip()
+            show_shortest_paths(graph, city)
+        else:
+            print("! Неверный выбор. Попробуйте снова.")
+
+
+asd()
